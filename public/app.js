@@ -20,7 +20,6 @@ async function api(path, options) {
 function show(view) {
   for (const item of [signupView, loginView, appView]) item.hidden = item !== view;
   const authenticated = view === appView;
-  logoutButton.hidden = !authenticated;
   accountMenu.hidden = !authenticated;
   accountActions.hidden = true;
   $("#guest-nav").hidden = authenticated;
