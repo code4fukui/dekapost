@@ -58,7 +58,8 @@ const base64url = {
       .replace(/=+$/, "");
   },
   decode(value: string): Uint8Array {
-    const base64 = value.replaceAll("-", "+").replaceAll("_", "/") + "===".slice(value.length % 4);
+    const padding = "=".repeat((4 - value.length % 4) % 4);
+    const base64 = value.replaceAll("-", "+").replaceAll("_", "/") + padding;
     return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
   },
 };

@@ -171,6 +171,7 @@ input {
   outline: none;
   color: var(--ink);
   background: #fbfbf8;
+  font-size: 16px;
 }
 input:focus {
   border-color: #74845c;
