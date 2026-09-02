@@ -30,8 +30,8 @@
         <form id="signup-form" class="panel">
           <p class="form-kicker">START FOR FREE</p>
           <h2>新規登録</h2>
-          <label>ID<input name="id" minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]+"
-              autocomplete="username" required><small>半角英数字・-・_ の3〜32文字</small></label>
+          <p
+            class="auto-id-note">登録時にIDを自動発行します。パスキーでそのままログインできます。</p>
           <label class="terms-check"><input name="acceptedTerms" type="checkbox" required><span><a
                 href="https://github.com/code4fukui/NANI-Terms/blob/main/versions/v1.0/TERMS-ja.md"
                 target="_blank" rel="noopener">NANI Terms v1.0</a> に同意する</span></label>
@@ -83,6 +83,11 @@
           <div><span id="progress-name"></span><strong id="progress-value">0%</strong></div>
           <div class="track"><i id="progress-bar"></i></div>
           <button id="cancel-upload" class="text-button">キャンセル</button>
+        </div>
+        <div id="upload-result" class="upload-result" hidden>
+          <span>共有リンク</span>
+          <a id="share-link" target="_blank" rel="noopener"></a>
+          <button id="copy-link" class="passkey-button" type="button">リンクをコピー</button>
         </div>
         <section class="files-section">
           <div class="section-title"><h2>最近のファイル</h2><span>最大100件</span></div>

@@ -164,6 +164,12 @@ label small {
 .terms-check a {
   color: var(--ink);
 }
+.auto-id-note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 18px 0;
+}
 input {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -298,6 +304,29 @@ input:focus {
   border: 1px solid var(--line);
   padding: 36px;
   border-radius: 20px;
+}
+.upload-result {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 22px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.upload-result > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.upload-result a {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 14px;
+}
+.upload-result .passkey-button {
+  justify-self: start;
+  width: auto;
 }
 .progress > div:first-child {
   display: flex;

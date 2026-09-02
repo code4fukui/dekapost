@@ -29,6 +29,15 @@ function toast(message) {
   setTimeout(() => element.classList.remove("show"), 2500);
 }
 
+async function copyText(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB", "TB"];
@@ -196,7 +205,7 @@ $("#signup-form").onsubmit = async (event) => {
   const values = Object.fromEntries(new FormData(event.currentTarget));
   $("#signup-error").textContent = "";
   try {
-    await registerPasskey(values.id, values.acceptedTerms === "on");
+    await registerPasskey(undefined, values.acceptedTerms === "on");
     await startPasskeyLogin();
     await enterApp();
     toast("アカウントを作成しました");
@@ -268,6 +277,7 @@ function upload(file) {
   if (!file || activeUpload) return;
   const progress = $("#progress");
   progress.hidden = false;
+  $("#upload-result").hidden = true;
   $("#dropzone").hidden = true;
   $("#progress-name").textContent = file.name;
   const request = new XMLHttpRequest();
@@ -287,8 +297,12 @@ function upload(file) {
     $("#dropzone").hidden = false;
     if (request.status >= 200 && request.status < 300) {
       const result = JSON.parse(request.responseText);
-      await navigator.clipboard.writeText(new URL(result.url, location.origin));
-      toast("完了。共有リンクをコピーしました");
+      const link = new URL(result.url, location.origin).href;
+      const shareLink = $("#share-link");
+      shareLink.href = link;
+      shareLink.textContent = link;
+      $("#upload-result").hidden = false;
+      toast("完了。共有リンクを表示しました");
       await loadFiles();
     } else {
       let message = "アップロードに失敗しました";
@@ -327,6 +341,11 @@ dropzone.ondrop = (event) => {
 };
 $("#file-input").onchange = (event) => upload(event.target.files[0]);
 $("#cancel-upload").onclick = () => activeUpload?.abort();
+$("#copy-link").onclick = async () => {
+  const link = $("#share-link").href;
+  if (await copyText(link)) toast("共有リンクをコピーしました");
+  else toast("リンクを長押ししてコピーしてください");
+};
 
 try {
   const user = await api("/api/me");

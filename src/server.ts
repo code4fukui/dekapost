@@ -85,9 +85,16 @@ async function passkeyRegisterOptions(
   user: SessionUser | null,
 ): Promise<Response> {
   const body = await readJson(request);
-  if (!validUserId(body?.id)) return errorResponse("Invalid ID", 400);
+  if (!body) return errorResponse("Invalid registration request", 400);
+  if (body?.id !== undefined && !validUserId(body.id)) return errorResponse("Invalid ID", 400);
   if (user && user.id !== body.id) return errorResponse("Invalid ID", 400);
-  const existing = db.prepare("SELECT id FROM users WHERE id = ?").get(body.id);
+  let userId = user?.id ?? (body?.id as string | undefined);
+  if (!userId) {
+    do {
+      userId = `u_${randomToken(9)}`;
+    } while (db.prepare("SELECT id FROM users WHERE id = ?").get(userId));
+  }
+  const existing = db.prepare("SELECT id FROM users WHERE id = ?").get(userId);
   if (existing && !user) return errorResponse("This ID is already in use", 409);
   const now = new Date().toISOString();
   if (!existing) {
@@ -99,17 +106,16 @@ async function passkeyRegisterOptions(
         id, password_hash, is_admin, must_change_password, created_at, updated_at, passkey_pending,
         accepted_terms_version, accepted_terms_at
       ) VALUES (?, ?, 0, 0, ?, ?, 1, ?, ?)`,
-    ).run(body.id, await hashPassword(randomToken()), now, now, body.termsVersion, now);
+    ).run(userId, await hashPassword(randomToken()), now, now, body.termsVersion, now);
   }
   const credentials = db.prepare("SELECT credential_id FROM passkeys WHERE user_id = ?").all(
-    body.id,
+    userId,
   ) as Array<{ credential_id: string }>;
   const options = await generateRegistrationOptions({
     rpName: webauthnRpName,
     rpID: webauthnRpId,
-    userName: body.id,
-    userDisplayName: body.id,
-    userID: new TextEncoder().encode(body.id),
+    userName: userId,
+    userDisplayName: userId,
     attestationType: "none",
     excludeCredentials: credentials.map((credential) => ({ id: credential.credential_id })),
     authenticatorSelection: { residentKey: "required", userVerification: "required" },
@@ -120,7 +126,7 @@ async function passkeyRegisterOptions(
     "INSERT INTO webauthn_challenges(id, user_id, challenge, type, expires_at, created_at) VALUES (?, ?, ?, 'registration', ?, ?)",
   ).run(
     challengeId,
-    body.id,
+    userId,
     options.challenge,
     new Date(Date.now() + challengeSeconds * 1000).toISOString(),
     now,
