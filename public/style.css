@@ -72,6 +72,20 @@ main {
   margin: auto;
   padding: 72px 28px 100px;
 }
+.site-footer {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 28px 28px;
+  text-align: right;
+}
+.site-footer a {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: var(--ink);
+}
 .login-view {
   display: grid;
   grid-template-columns: 1.25fr .75fr;
@@ -90,6 +104,9 @@ h1 {
   line-height: 1.07;
   letter-spacing: -.055em;
   margin: 0;
+}
+.nowrap {
+  white-space: nowrap;
 }
 h1 em {
   font-style: normal;
@@ -408,6 +425,9 @@ input:focus {
   .login-view {
     grid-template-columns: 1fr;
     gap: 48px;
+  }
+  .login-view h1 {
+    font-size: clamp(34px, 10vw, 52px);
   }
   .panel {
     padding: 25px;
