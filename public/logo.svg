@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title>DekaPost</title>
+  <rect width="48" height="48" rx="15" fill="#c8f135" />
+  <path
+    d="M13 11h9.5c8.3 0 13.5 4.8 13.5 13s-5.2 13-13.5 13H13V11Zm8.8 20.2c4.9 0 7.8-2.4 7.8-7.2s-2.9-7.2-7.8-7.2h-2.1v14.4h2.1Z"
+    fill="#18211d" />
+  <path d="M29 24h9m0 0-4-4m4 4-4 4" fill="none" stroke="#18211d" stroke-width="2.4"
+    stroke-linecap="round" stroke-linejoin="round" />
+</svg>

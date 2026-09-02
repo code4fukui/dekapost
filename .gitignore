@@ -1,0 +1,21 @@
+# Runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / temporary files
+*.log
+tmp/
+temp/
+
+# OS / editor
+.DS_Store
+
