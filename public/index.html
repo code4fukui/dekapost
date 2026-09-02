@@ -32,12 +32,10 @@
           <h2>新規登録</h2>
           <label>ID<input name="id" minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]+"
               autocomplete="username" required><small>半角英数字・-・_ の3〜32文字</small></label>
-          <label>パスワード<input name="password" type="password" minlength="8"
-              autocomplete="new-password" required><small>8文字以上</small></label>
           <label class="terms-check"><input name="acceptedTerms" type="checkbox" required><span><a
                 href="https://github.com/code4fukui/NANI-Terms/blob/main/versions/v1.0/TERMS-ja.md"
                 target="_blank" rel="noopener">NANI Terms v1.0</a> に同意する</span></label>
-          <button class="primary">アカウントを作成 <span>→</span></button>
+          <button class="primary">パスキーでアカウントを作成 <span>→</span></button>
           <p id="signup-error" class="error" role="alert"></p>
         </form>
       </section>
@@ -49,6 +47,8 @@
           <label>ID<input name="id" autocomplete="username" required></label>
           <label>パスワード<input name="password" type="password" autocomplete="current-password" required></label>
           <button class="primary">ログイン <span>→</span></button>
+          <button id="passkey-login" class="passkey-button"
+            type="button">パスキーでログイン</button>
           <p id="login-error" class="error" role="alert"></p>
         </form>
       </section>
@@ -69,6 +69,8 @@
         <div class="hero">
           <p class="eyebrow">SEND SOMETHING BIG</p>
           <h1>ファイルを置いて、<br><em>リンクを届ける。</em></h1>
+          <button id="register-passkey" class="passkey-button"
+            type="button">この端末にパスキーを追加</button>
         </div>
         <div id="dropzone" class="dropzone" tabindex="0" role="button"
           aria-label="アップロードするファイルを選択">

@@ -45,6 +45,76 @@ function formatStorage(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(bytes < 1024 * 1024 ? 2 : 1)} MB`;
 }
 
+function encodeBase64url(value) {
+  return btoa(String.fromCharCode(...new Uint8Array(value))).replaceAll("+", "-").replaceAll(
+    "/",
+    "_",
+  )
+    .replace(/=+$/, "");
+}
+
+function decodeBase64url(value) {
+  const base64 = value.replaceAll("-", "+").replaceAll("_", "/") + "===".slice(value.length % 4);
+  return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+}
+
+function credentialJSON(credential) {
+  const response = credential.response;
+  const result = {
+    id: credential.id,
+    rawId: encodeBase64url(credential.rawId),
+    type: credential.type,
+    response: { clientDataJSON: encodeBase64url(response.clientDataJSON) },
+  };
+  if ("attestationObject" in response) {
+    result.response.attestationObject = encodeBase64url(response.attestationObject);
+    result.response.transports = response.getTransports?.() ?? [];
+  } else {
+    result.response.authenticatorData = encodeBase64url(response.authenticatorData);
+    result.response.signature = encodeBase64url(response.signature);
+    result.response.userHandle = response.userHandle ? encodeBase64url(response.userHandle) : null;
+  }
+  return result;
+}
+
+async function startPasskeyLogin() {
+  if (!globalThis.PublicKeyCredential) throw new Error("このブラウザはパスキーに対応していません");
+  const options = await api("/api/passkey/login/options", { method: "POST" });
+  const publicKey = { ...options, challenge: decodeBase64url(options.challenge) };
+  const credential = await navigator.credentials.get({ publicKey });
+  if (!credential) throw new Error("パスキーが選択されませんでした");
+  return api("/api/passkey/login/verify", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ credential: credentialJSON(credential) }),
+  });
+}
+
+async function registerPasskey(id, acceptedTerms = false) {
+  if (!globalThis.PublicKeyCredential) throw new Error("このブラウザはパスキーに対応していません");
+  const options = await api("/api/passkey/register/options", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id, acceptedTerms, termsVersion: "NANI Terms v1.0" }),
+  });
+  const publicKey = {
+    ...options,
+    challenge: decodeBase64url(options.challenge),
+    user: { ...options.user, id: decodeBase64url(options.user.id) },
+    excludeCredentials: options.excludeCredentials?.map((credential) => ({
+      ...credential,
+      id: decodeBase64url(credential.id),
+    })),
+  };
+  const credential = await navigator.credentials.create({ publicKey });
+  if (!credential) throw new Error("パスキーが作成されませんでした");
+  await api("/api/passkey/register/verify", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ credential: credentialJSON(credential) }),
+  });
+}
+
 function formatDate(value) {
   return new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short" }).format(
     new Date(value),
@@ -125,25 +195,23 @@ $("#signup-form").onsubmit = async (event) => {
   const values = Object.fromEntries(new FormData(event.currentTarget));
   $("#signup-error").textContent = "";
   try {
-    await api("/api/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        id: values.id,
-        password: values.password,
-        acceptedTerms: values.acceptedTerms === "on",
-        termsVersion: "NANI Terms v1.0",
-      }),
-    });
-    await api("/api/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: values.id, password: values.password }),
-    });
+    await registerPasskey(values.id, values.acceptedTerms === "on");
+    await startPasskeyLogin();
     await enterApp();
     toast("アカウントを作成しました");
   } catch (error) {
     $("#signup-error").textContent = error.message;
+  }
+};
+
+$("#passkey-login").onclick = async () => {
+  $("#login-error").textContent = "";
+  try {
+    const user = await startPasskeyLogin();
+    if (user.mustChangePassword) show(passwordView);
+    else await enterApp();
+  } catch (error) {
+    $("#login-error").textContent = error.message;
   }
 };
 
@@ -183,6 +251,16 @@ $("#password-form").onsubmit = async (event) => {
 logoutButton.onclick = async () => {
   await api("/api/logout", { method: "POST" });
   show(signupView);
+};
+
+$("#register-passkey").onclick = async () => {
+  try {
+    const user = await api("/api/me");
+    await registerPasskey(user.id);
+    toast("この端末にパスキーを追加しました");
+  } catch (error) {
+    toast(error.message);
+  }
 };
 
 function upload(file) {

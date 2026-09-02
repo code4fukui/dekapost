@@ -189,6 +189,24 @@ input:focus {
   justify-content: center;
   gap: 12px;
 }
+.passkey-button {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin-top: 10px;
+  color: var(--ink);
+  background: transparent;
+  font-weight: 700;
+}
+.passkey-button:hover {
+  background: #f1f4ec;
+}
+.hero .passkey-button {
+  width: auto;
+  align-self: end;
+  white-space: nowrap;
+}
 .text-button {
   border: 0;
   background: none;
@@ -434,6 +452,12 @@ input:focus {
   }
   .dropzone {
     min-height: 220px;
+  }
+  .hero {
+    display: block;
+  }
+  .hero .passkey-button {
+    margin-top: 24px;
   }
   .file-row {
     align-items: flex-start;

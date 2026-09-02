@@ -25,6 +25,9 @@ deno task start
 - `DATA_DIR`: DB・アップロード保存先（既定: `./data`）
 - `MAX_UPLOAD_BYTES`: 1ファイルの上限bytes（既定: 10 GiB）
 - `COOKIE_SECURE=1`: HTTPS環境でsession cookieへ`Secure`を付与
+- `WEBAUTHN_RP_NAME`: パスキーに表示するサービス名（既定: `DekaPost`）
+- `WEBAUTHN_RP_ID`: パスキーの対象ドメイン（既定: `dekapost.sabae.cc`）
+- `WEBAUTHN_ORIGIN`: パスキー検証対象のorigin（既定: `https://dekapost.sabae.cc`）
 
 本番ではHTTPSのreverse proxy配下で起動し、proxy側のrequest
 body上限とtimeoutも用途に合わせて設定してください。
@@ -94,11 +97,14 @@ Environment=PORT=8000
 Environment=DATA_DIR=/var/lib/dekapost/data
 Environment=MAX_UPLOAD_BYTES=10737418240
 Environment=COOKIE_SECURE=1
+Environment=WEBAUTHN_RP_NAME=DekaPost
+Environment=WEBAUTHN_RP_ID=dekapost.sabae.cc
+Environment=WEBAUTHN_ORIGIN=https://dekapost.sabae.cc
 ExecStart=/var/lib/dekapost/.deno/bin/deno run \
   --allow-net=127.0.0.1:8000 \
   --allow-read=/opt/dekapost/public,/opt/dekapost/migrations,/var/lib/dekapost/data \
   --allow-write=/var/lib/dekapost/data \
-  --allow-env=HOST,PORT,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE \
+  --allow-env=HOST,PORT,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE,WEBAUTHN_RP_NAME,WEBAUTHN_RP_ID,WEBAUTHN_ORIGIN \
   /opt/dekapost/src/server.ts
 Restart=on-failure
 RestartSec=3

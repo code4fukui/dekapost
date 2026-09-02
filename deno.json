@@ -1,8 +1,11 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-read=public,migrations,data --allow-write=data --allow-env=PORT,HOST,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE src/server.ts",
-    "start": "deno run --allow-net --allow-read=public,migrations,data --allow-write=data --allow-env=PORT,HOST,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE src/server.ts",
+    "dev": "deno run --watch --allow-net --allow-read=public,migrations,data --allow-write=data --allow-env=PORT,HOST,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE,WEBAUTHN_RP_NAME,WEBAUTHN_RP_ID,WEBAUTHN_ORIGIN src/server.ts",
+    "start": "deno run --allow-net --allow-read=public,migrations,data --allow-write=data --allow-env=PORT,HOST,DATA_DIR,MAX_UPLOAD_BYTES,COOKIE_SECURE,WEBAUTHN_RP_NAME,WEBAUTHN_RP_ID,WEBAUTHN_ORIGIN src/server.ts",
     "test": "deno test --allow-read --allow-write --allow-env"
+  },
+  "imports": {
+    "@simplewebauthn/server": "npm:@simplewebauthn/server@13.3.1"
   },
   "fmt": {
     "lineWidth": 100
