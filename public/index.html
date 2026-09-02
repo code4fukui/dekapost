@@ -20,8 +20,7 @@
       <div id="account-menu" class="account-menu" hidden>
         <button id="user-id" class="user-id" type="button"></button>
         <div id="account-actions" class="account-actions" hidden>
-          <button id="add-passkey" type="button">この端末にパスキーを追加</button>
-          <button id="delete-account" class="danger" type="button">アカウント削除</button>
+          <button id="account-link" type="button">マイアカウント</button>
           <button id="logout" type="button">ログアウト</button>
         </div>
       </div>
@@ -101,6 +100,19 @@
             </table>
           </div>
         </section>
+      </section>
+      <section id="account-view" class="narrow" hidden>
+        <button id="back-to-app" class="back-button" type="button">← ファイル一覧へ戻る</button>
+        <p class="eyebrow">MY ACCOUNT</p>
+        <h1>マイアカウント</h1>
+        <div class="panel account-panel">
+          <p id="account-name" class="account-name"></p>
+          <button id="add-passkey" class="passkey-button" type="button">
+            この端末にパスキーを追加
+          </button>
+          <button id="delete-account" class="account-delete-button"
+            type="button">アカウント削除</button>
+        </div>
       </section>
     </main>
     <footer class="site-footer">

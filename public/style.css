@@ -265,6 +265,23 @@ input:focus {
 .account-actions .danger {
   color: #9b3737;
 }
+.account-name {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.account-delete-button {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: #9b3737;
+  padding: 12px 18px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.account-delete-button:hover {
+  text-decoration: underline;
+}
 .error {
   color: #a33636;
   min-height: 20px;

@@ -2,6 +2,7 @@ const $ = (selector) => document.querySelector(selector);
 const signupView = $("#signup-view");
 const loginView = $("#login-view");
 const appView = $("#app-view");
+const accountView = $("#account-view");
 const adminView = $("#admin-view");
 const accountMenu = $("#account-menu");
 const accountActions = $("#account-actions");
@@ -18,8 +19,8 @@ async function api(path, options) {
 }
 
 function show(view) {
-  for (const item of [signupView, loginView, appView]) item.hidden = item !== view;
-  const authenticated = view === appView;
+  for (const item of [signupView, loginView, appView, accountView]) item.hidden = item !== view;
+  const authenticated = view === appView || view === accountView;
   accountMenu.hidden = !authenticated;
   accountActions.hidden = true;
   $("#guest-nav").hidden = authenticated;
@@ -177,6 +178,7 @@ async function enterApp() {
   const user = await api("/api/me");
   userIdButton.textContent = "ID: " + user.id;
   userIdButton.title = "この端末にパスキーを追加";
+  $("#account-name").textContent = "ログイン中のID: " + user.id;
   adminView.hidden = !user.isAdmin;
   await loadFiles();
   if (user.isAdmin) await loadUsers();
@@ -237,6 +239,15 @@ logoutButton.onclick = async () => {
 userIdButton.onclick = () => {
   accountActions.hidden = !accountActions.hidden;
 };
+
+$("#account-link").onclick = async () => {
+  accountActions.hidden = true;
+  const user = await api("/api/me");
+  $("#account-name").textContent = "ログイン中のID: " + user.id;
+  show(accountView);
+};
+
+$("#back-to-app").onclick = () => show(appView);
 
 $("#add-passkey").onclick = async () => {
   accountActions.hidden = true;
