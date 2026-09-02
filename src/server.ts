@@ -1,4 +1,4 @@
-import { hashPassword, randomToken, sha256, verifyPassword } from "./auth.ts";
+import { hashPassword, randomToken, sha256 } from "./auth.ts";
 import { openDatabase, type User } from "./db.ts";
 import {
   generateAuthenticationOptions,
@@ -40,7 +40,7 @@ try {
 }
 const db = await openDatabase(databaseToOpen, `${root}migrations`);
 
-type SessionUser = User & { password_hash: string };
+type SessionUser = User;
 type FileRow = {
   id: string;
   share_token: string;
@@ -337,7 +337,7 @@ async function currentUser(request: Request): Promise<SessionUser | null> {
   const session = cookie(request, "session");
   if (!session) return null;
   const row = db.prepare(
-    `SELECT users.id, users.password_hash, users.is_admin, users.must_change_password
+    `SELECT users.id, users.is_admin, users.must_change_password
      FROM sessions JOIN users ON users.id = sessions.user_id
      WHERE sessions.id_hash = ? AND sessions.expires_at > ?`,
   ).get(await sha256(session), new Date().toISOString()) as SessionUser | undefined;
@@ -356,96 +356,8 @@ async function readJson(request: Request): Promise<Record<string, unknown> | nul
   }
 }
 
-function validPassword(value: unknown): value is string {
-  return typeof value === "string" && value.length >= 8 && value.length <= 200;
-}
-
 function validUserId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{3,32}$/.test(value);
-}
-
-async function register(request: Request): Promise<Response> {
-  const body = await readJson(request);
-  if (!validUserId(body?.id)) {
-    return errorResponse(
-      "IDは半角英数字・ハイフン・アンダースコアの3〜32文字で入力してください",
-      400,
-    );
-  }
-  if (!validPassword(body?.password)) {
-    return errorResponse("パスワードは8文字以上で入力してください", 400);
-  }
-  if (body.acceptedTerms !== true || body.termsVersion !== "NANI Terms v1.0") {
-    return errorResponse("利用規約への同意が必要です", 400);
-  }
-  const now = new Date().toISOString();
-  try {
-    db.prepare(
-      `INSERT INTO users(
-        id, password_hash, is_admin, must_change_password, created_at, updated_at,
-        accepted_terms_version, accepted_terms_at
-      ) VALUES (?, ?, 0, 0, ?, ?, ?, ?)`,
-    ).run(body.id, await hashPassword(body.password), now, now, body.termsVersion, now);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
-      return errorResponse("このIDは使用できません", 409);
-    }
-    throw error;
-  }
-  return json({ ok: true }, 201);
-}
-
-async function login(request: Request): Promise<Response> {
-  const body = await readJson(request);
-  const id = body?.id;
-  const password = body?.password;
-  if (typeof id !== "string" || typeof password !== "string") {
-    return errorResponse("Invalid ID or password", 401);
-  }
-  const user = db.prepare(
-    "SELECT id, password_hash, is_admin, must_change_password FROM users WHERE id = ?",
-  ).get(id) as SessionUser | undefined;
-  if (!user || !await verifyPassword(password, user.password_hash)) {
-    return errorResponse("Invalid ID or password", 401);
-  }
-  const session = randomToken();
-  const now = new Date();
-  db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(now.toISOString());
-  db.prepare("INSERT INTO sessions(id_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)")
-    .run(
-      await sha256(session),
-      user.id,
-      new Date(now.getTime() + sessionSeconds * 1000).toISOString(),
-      now.toISOString(),
-    );
-  const attributes = [
-    `session=${encodeURIComponent(session)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${sessionSeconds}`,
-  ];
-  if (secureCookie) attributes.push("Secure");
-  return json({ id: user.id, mustChangePassword: Boolean(user.must_change_password) }, 200, {
-    "set-cookie": attributes.join("; "),
-  });
-}
-
-async function changePassword(request: Request, user: SessionUser): Promise<Response> {
-  const body = await readJson(request);
-  if (typeof body?.currentPassword !== "string" || !validPassword(body.newPassword)) {
-    return errorResponse(
-      "Current password and a new password of at least 8 characters are required",
-      400,
-    );
-  }
-  if (!await verifyPassword(body.currentPassword, user.password_hash)) {
-    return errorResponse("Current password is incorrect", 400);
-  }
-  db.prepare(
-    "UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = ? WHERE id = ?",
-  ).run(await hashPassword(body.newPassword), new Date().toISOString(), user.id);
-  return json({ ok: true });
 }
 
 function safeFilename(value: string): string {
@@ -457,7 +369,6 @@ function safeFilename(value: string): string {
 }
 
 async function upload(request: Request, user: SessionUser): Promise<Response> {
-  if (user.must_change_password) return errorResponse("Password change required", 403);
   const length = Number(request.headers.get("content-length"));
   if (Number.isFinite(length) && length > maxUploadBytes) {
     return errorResponse("File is too large", 413);
@@ -592,6 +503,43 @@ async function deleteFile(id: string, user: SessionUser): Promise<Response> {
   return new Response(null, { status: 204 });
 }
 
+async function deleteAccount(user: SessionUser): Promise<Response> {
+  if (user.is_admin) {
+    const adminCount =
+      (db.prepare("SELECT COUNT(*) AS count FROM users WHERE is_admin = 1").get() as {
+        count: number;
+      }).count;
+    if (adminCount <= 1) return errorResponse("最後の管理者は削除できません", 409);
+  }
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const files = db.prepare("SELECT storage_name FROM files WHERE owner_id = ?").all(
+      user.id,
+    ) as Array<{
+      storage_name: string;
+    }>;
+    for (const file of files) {
+      try {
+        await Deno.remove(`${uploadDirectory}/${file.storage_name}`);
+      } catch (error) {
+        if (!(error instanceof Deno.errors.NotFound)) throw error;
+      }
+    }
+    db.prepare("DELETE FROM files WHERE owner_id = ?").run(user.id);
+    db.prepare("DELETE FROM passkeys WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user.id);
+    db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return new Response(null, {
+    status: 204,
+    headers: { "set-cookie": "session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0" },
+  });
+}
+
 function contentDisposition(name: string): string {
   const fallback = name.replace(/[^\x20-\x7e]/g, "_").replaceAll('"', "'");
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
@@ -641,10 +589,6 @@ export function createHandler(): (request: Request) => Promise<Response> {
   return async (request) => {
     try {
       const url = new URL(request.url);
-      if (request.method === "POST" && url.pathname === "/api/register") {
-        return await register(request);
-      }
-      if (request.method === "POST" && url.pathname === "/api/login") return await login(request);
       if (request.method === "POST" && url.pathname === "/api/logout") {
         const session = cookie(request, "session");
         if (session) {
@@ -653,6 +597,11 @@ export function createHandler(): (request: Request) => Promise<Response> {
         return json({ ok: true }, 200, {
           "set-cookie": "session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
         });
+      }
+      if (request.method === "DELETE" && url.pathname === "/api/account") {
+        const user = await currentUser(request);
+        if (!user) return errorResponse("Authentication required", 401);
+        return await deleteAccount(user);
       }
       const share = url.pathname.match(/^\/s\/([A-Za-z0-9_-]+)$/);
       if (share && (request.method === "GET" || request.method === "HEAD")) {
@@ -682,9 +631,6 @@ export function createHandler(): (request: Request) => Promise<Response> {
             isAdmin: Boolean(user.is_admin),
             mustChangePassword: Boolean(user.must_change_password),
           });
-        }
-        if (request.method === "POST" && url.pathname === "/api/password") {
-          return await changePassword(request, user);
         }
         if (request.method === "GET" && url.pathname === "/api/files") {
           return await listFiles(user);

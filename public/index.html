@@ -17,6 +17,13 @@
           target="_blank" rel="noopener">利用規約</a>
         <button id="show-login" class="nav-login">ログイン</button>
       </nav>
+      <div id="account-menu" class="account-menu" hidden>
+        <button id="user-id" class="user-id" type="button"></button>
+        <div id="account-actions" class="account-actions" hidden>
+          <button id="add-passkey" type="button">この端末にパスキーを追加</button>
+          <button id="delete-account" class="danger" type="button">アカウント削除</button>
+        </div>
+      </div>
       <button id="logout" class="text-button" hidden>ログアウト</button>
     </header>
     <main>
@@ -44,24 +51,9 @@
         <form id="login-form" class="panel">
           <button id="back-to-signup" class="back-button" type="button">← 新規登録へ戻る</button>
           <h2>ログイン</h2>
-          <label>ID<input name="id" autocomplete="username" required></label>
-          <label>パスワード<input name="password" type="password" autocomplete="current-password" required></label>
-          <button class="primary">ログイン <span>→</span></button>
           <button id="passkey-login" class="passkey-button"
             type="button">パスキーでログイン</button>
           <p id="login-error" class="error" role="alert"></p>
-        </form>
-      </section>
-
-      <section id="password-view" class="narrow" hidden>
-        <p class="eyebrow">ONE MORE STEP</p>
-        <h1>新しいパスワードを設定</h1>
-        <p class="lead">初回ログインのため、8文字以上のパスワードへ変更してください。</p>
-        <form id="password-form" class="panel">
-          <label>現在のパスワード<input name="currentPassword" type="password" required></label>
-          <label>新しいパスワード<input name="newPassword" type="password" minlength="8" required></label>
-          <button class="primary">変更して続ける</button>
-          <p id="password-error" class="error" role="alert"></p>
         </form>
       </section>
 
@@ -69,8 +61,6 @@
         <div class="hero">
           <p class="eyebrow">SEND SOMETHING BIG</p>
           <h1>ファイルを置いて、<br><em>リンクを届ける。</em></h1>
-          <button id="register-passkey" class="passkey-button"
-            type="button">この端末にパスキーを追加</button>
         </div>
         <div id="dropzone" class="dropzone" tabindex="0" role="button"
           aria-label="アップロードするファイルを選択">

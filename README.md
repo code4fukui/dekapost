@@ -9,8 +9,8 @@
 deno task start
 ```
 
-`http://127.0.0.1:8000` を開き、初期管理者 `admin` / `adminadmin`
-でログインします。初回ログイン時はパスワード変更が必須です。
+`http://127.0.0.1:8000` を開き、パスキーでログインします。初期管理者を利用する場合は、
+切り替え前に管理者端末でパスキーを登録しておいてください。
 
 トップページから一般ユーザーを新規登録できます。登録時には
 [NANI Terms v1.0](https://github.com/code4fukui/NANI-Terms/blob/main/versions/v1.0/TERMS-ja.md)

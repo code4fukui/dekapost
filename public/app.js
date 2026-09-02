@@ -1,9 +1,11 @@
 const $ = (selector) => document.querySelector(selector);
 const signupView = $("#signup-view");
 const loginView = $("#login-view");
-const passwordView = $("#password-view");
 const appView = $("#app-view");
 const adminView = $("#admin-view");
+const accountMenu = $("#account-menu");
+const accountActions = $("#account-actions");
+const userIdButton = $("#user-id");
 const logoutButton = $("#logout");
 let activeUpload;
 
@@ -16,9 +18,11 @@ async function api(path, options) {
 }
 
 function show(view) {
-  for (const item of [signupView, loginView, passwordView, appView]) item.hidden = item !== view;
-  const authenticated = view === passwordView || view === appView;
+  for (const item of [signupView, loginView, appView]) item.hidden = item !== view;
+  const authenticated = view === appView;
   logoutButton.hidden = !authenticated;
+  accountMenu.hidden = !authenticated;
+  accountActions.hidden = true;
   $("#guest-nav").hidden = authenticated;
 }
 
@@ -172,6 +176,8 @@ async function loadFiles() {
 async function enterApp() {
   show(appView);
   const user = await api("/api/me");
+  userIdButton.textContent = "ID: " + user.id;
+  userIdButton.title = "この端末にパスキーを追加";
   adminView.hidden = !user.isAdmin;
   await loadFiles();
   if (user.isAdmin) await loadUsers();
@@ -217,44 +223,10 @@ $("#signup-form").onsubmit = async (event) => {
 $("#passkey-login").onclick = async () => {
   $("#login-error").textContent = "";
   try {
-    const user = await startPasskeyLogin();
-    if (user.mustChangePassword) show(passwordView);
-    else await enterApp();
-  } catch (error) {
-    $("#login-error").textContent = error.message;
-  }
-};
-
-$("#login-form").onsubmit = async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  $("#login-error").textContent = "";
-  try {
-    const user = await api("/api/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(form)),
-    });
-    if (user.mustChangePassword) show(passwordView);
-    else await enterApp();
-  } catch (error) {
-    $("#login-error").textContent = error.message;
-  }
-};
-
-$("#password-form").onsubmit = async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  $("#password-error").textContent = "";
-  try {
-    await api("/api/password", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(form)),
-    });
+    await startPasskeyLogin();
     await enterApp();
   } catch (error) {
-    $("#password-error").textContent = error.message;
+    $("#login-error").textContent = error.message;
   }
 };
 
@@ -263,11 +235,30 @@ logoutButton.onclick = async () => {
   show(signupView);
 };
 
-$("#register-passkey").onclick = async () => {
+userIdButton.onclick = () => {
+  accountActions.hidden = !accountActions.hidden;
+};
+
+$("#add-passkey").onclick = async () => {
+  accountActions.hidden = true;
   try {
     const user = await api("/api/me");
     await registerPasskey(user.id);
     toast("この端末にパスキーを追加しました");
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+$("#delete-account").onclick = async () => {
+  accountActions.hidden = true;
+  if (
+    !confirm("アカウントを削除しますか？\nすべてのファイル、パスキー、ログイン情報が削除されます。")
+  ) return;
+  try {
+    await api("/api/account", { method: "DELETE" });
+    show(signupView);
+    toast("アカウントを削除しました");
   } catch (error) {
     toast(error.message);
   }
@@ -348,9 +339,8 @@ $("#copy-link").onclick = async () => {
 };
 
 try {
-  const user = await api("/api/me");
-  if (user.mustChangePassword) show(passwordView);
-  else await enterApp();
+  await api("/api/me");
+  await enterApp();
 } catch {
   show(signupView);
 }

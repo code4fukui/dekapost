@@ -220,6 +220,51 @@ input:focus {
   color: var(--muted);
   padding: 8px;
 }
+.user-id {
+  max-width: 180px;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-id:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.account-menu {
+  position: relative;
+}
+.account-actions {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 2;
+  display: grid;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px #27382e18;
+}
+.account-actions button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+.account-actions button:hover {
+  background: #f1f4ec;
+}
+.account-actions .danger {
+  color: #9b3737;
+}
 .error {
   color: #a33636;
   min-height: 20px;
